@@ -3,9 +3,11 @@ const { hideBin } = require('yargs/helpers');
 const PlaywrightHelper = require('./utils/playwrightHelper');
 const { db } = require('./db/database'); // Ensure the database is initialized
 const scrapeRemotesComUy = require('./scrapers/scraperRemotesComUY');
+const scrapeCastells = require('./scrapers/scraperCastells');
 
 const scrapers = {
   remotes: scrapeRemotesComUy,
+  castells: scrapeCastells,
 };
 
 const runScrapers = async (scraperNames, debugMode) => {
