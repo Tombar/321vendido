@@ -11,7 +11,7 @@ db.serialize(() => {
 const insertRemate = (site, title, description, startDate, endDate, url) =>
   new Promise((resolve, reject) => {
     const query = `
-      INSERT INTO remates (site, title, description, start_date, end_date, url)
+      INSERT OR REPLACE INTO remates (site, title, description, start_date, end_date, url)
       VALUES (?, ?, ?, ?, ?, ?);
     `;
     db.run(query, [site, title, description, startDate, endDate, url], function (err) {

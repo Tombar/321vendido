@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS remates (
   end_date TEXT,
   url TEXT,
   rematador_id INTEGER,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (url)
 );
 
 CREATE TABLE IF NOT EXISTS items (
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS items (
   description TEXT,
   image_url TEXT,
   FOREIGN KEY (remate_id) REFERENCES remates (id)
+  -- UNIQUE ()
 );
 
 CREATE TABLE IF NOT EXISTS rematadores (
