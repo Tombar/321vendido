@@ -45,7 +45,6 @@ const scrapeLandingPage = async (helper) => {
   }
 };
 
-
 const scrapeRemateDetail = async (helper, remate) => {
   const page = await helper.newPage();
 
@@ -56,15 +55,16 @@ const scrapeRemateDetail = async (helper, remate) => {
     // Wait for the page content to load
     await page.waitForSelector('#pujarContainer');
 
-    // Extract items data
-    const items = await page.evaluate(() => {
+    // Extract details and items data
+    const { details, items } = await page.evaluate(() => {
       const getTextAfterLabel = (label) => {
         const strongElements = [...document.querySelectorAll('strong')];
         const element = strongElements.find((el) => el.innerText.includes(label));
         return element ? element.nextSibling?.textContent.trim() : null;
       };
 
-      return {
+      // Extract auction details
+      const details = {
         title: document.querySelector('h4')?.innerText.trim() || 'No title',
         date: getTextAfterLabel('Cuándo:') || 'No date',
         location: getTextAfterLabel('Dónde:') || 'No location',
@@ -72,18 +72,28 @@ const scrapeRemateDetail = async (helper, remate) => {
         commission: getTextAfterLabel('Comisión con impuestos:') || 'No commission',
         auctioneer: getTextAfterLabel('Remata:') || 'No auctioneer',
       };
+
+      // Extract item details (if present)
+      const items = [...document.querySelectorAll('.item')].map((item) => ({
+        name: item.querySelector('.item-name')?.innerText.trim() || 'No name',
+        description: item.querySelector('.item-description')?.innerText.trim() || 'No description',
+        imageUrl: item.querySelector('img')?.src || null,
+        price: item.querySelector('.item-price')?.innerText.trim() || 'No price',
+      }));
+
+      return { details, items };
     });
 
-    console.log(`Extracted details:`, items);
-    return items;
+    console.log(`Extracted details:`, details);
+    console.log(`Found ${items.length} items.`);
+    return { details, items };
   } catch (error) {
     console.error(`Error scraping remate details for ${remate.title}:`, error);
-    return {};
+    return { details: {}, items: [] };
   } finally {
     await page.close();
   }
 };
-
 
 
 const scrapeSite = async () => {
@@ -96,23 +106,23 @@ const scrapeSite = async () => {
     const remates = await scrapeLandingPage(helper);
 
     for (const remate of remates) {
-      // Insert remate into the database
+      const { details, items } = await scrapeRemateDetail(helper, remate);
+    
+      // Insert remate details into the database
       const remateId = await insertRemate(
-        'RemotesSite', // Replace with actual site name
-        remate.title,
-        remate.description,
-        null, // Start date if available
-        null, // End date if available
+        'RemotesSite',
+        details.title,
+        details.date,
+        details.location,
+        details.phone,
         remate.url
       );
-
-      // Scrape items for each remate
-      const items = await scrapeRemateDetail(helper, remate);
-
+    
+      // Insert each item associated with this remate
       for (const item of items) {
         await insertItem(remateId, item.name, item.description, item.imageUrl);
       }
-    }
+    }    
   } catch (error) {
     console.error('Error during site scraping:', error);
   } finally {
