@@ -53,74 +53,61 @@ const scrapeRemateDetail = async (helper, remate) => {
     await page.goto(remate.url);
 
     // Wait for the page content to load
-    await page.waitForSelector('#pujarContainer');
+    await page.$('audio#martillo + script');
 
-    // Extract details and items data
-    const { details, items } = await page.evaluate(() => {
-      const getTextAfterLabel = (label) => {
-        const strongElements = [...document.querySelectorAll('strong')];
-        const element = strongElements.find((el) => el.innerText.includes(label));
-        return element ? element.nextSibling?.textContent.trim() : null;
-      };
-
-      // Extract auction details
-      const details = {
-        title: document.querySelector('h4')?.innerText.trim() || 'No title',
-        date: getTextAfterLabel('Cuándo:') || 'No date',
-        location: getTextAfterLabel('Dónde:') || 'No location',
-        phone: getTextAfterLabel('Teléfono:') || 'No phone',
-        commission: getTextAfterLabel('Comisión con impuestos:') || 'No commission',
-        auctioneer: getTextAfterLabel('Remata:') || 'No auctioneer',
-      };
-
-      // Extract item details (if present)
-      const items = [...document.querySelectorAll('.item')].map((item) => ({
-        name: item.querySelector('.item-name')?.innerText.trim() || 'No name',
-        description: item.querySelector('.item-description')?.innerText.trim() || 'No description',
-        imageUrl: item.querySelector('img')?.src || null,
-        price: item.querySelector('.item-price')?.innerText.trim() || 'No price',
-      }));
-
-      return { details, items };
+    // Extract the "items" array from the JavaScript context
+    const items = await page.evaluate(() => {
+      return typeof window.items !== 'undefined' ? window.items : [];
     });
 
-    console.log(`Extracted details:`, details);
     console.log(`Found ${items.length} items.`);
-    return { details, items };
+    return {
+      details: remate,
+      items: items.map((item) => ({
+        id: item.id,
+        title: item.titulo,
+        description: item.descripcion,
+        quantity: item.cantidad,
+        price: item.base,
+        imageUrl: item.foto ? `https://static3.remotes.com.uy/${item.foto[0]}` : null,
+      }))
+    };
   } catch (error) {
-    console.error(`Error scraping remate details for ${remate.title}:`, error);
-    return { details: {}, items: [] };
+    console.error(`Error scraping remate details for ${remate.url}:`, error);
+    return { details: remate, items: [] };
   } finally {
     await page.close();
   }
 };
-
 
 const scrapeSite = async () => {
   const helper = new PlaywrightHelper();
 
   try {
     await helper.initBrowser();
-
-    // Scrape all remates from the landing page
     const remates = await scrapeLandingPage(helper);
 
     for (const remate of remates) {
-      const { details, items } = await scrapeRemateDetail(helper, remate);
-    
-      // Insert remate details into the database
+      // insert remate details into the database
       const remateId = await insertRemate(
         'RemotesSite',
-        details.title,
-        details.date,
-        details.location,
-        details.phone,
+        remate.title,
+        remate.description,
+        null, // start_date (not available in current scrape)
+        null, // end_date (not available in current scrape)
         remate.url
       );
+
+      const { details, items } = await scrapeRemateDetail(helper, remate);
     
-      // Insert each item associated with this remate
+      // Updated to use correct item field names from scrape
       for (const item of items) {
-        await insertItem(remateId, item.name, item.description, item.imageUrl);
+        await insertItem(
+          remateId,
+          item.title,        // Changed from item.name
+          item.description,
+          item.imageUrl
+        );
       }
     }    
   } catch (error) {

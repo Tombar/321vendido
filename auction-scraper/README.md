@@ -24,3 +24,9 @@ This project scrapes multiple auction sites and stores the data in a SQLite data
 ```
 node src/main.js --sites siteA siteB
 ```
+
+## Debug
+
+```
+DEBUG=pw:browser* node src/main.js --sites remotes --debug
+```

@@ -1,24 +1,30 @@
 const { chromium } = require('playwright');
-const { playwrightOptions } = require('../config');
 
 class PlaywrightHelper {
-  constructor(options = playwrightOptions) {
+  constructor() {
     this.browser = null;
-    this.options = options;
+    this.defaultOptions = { headless: true, devtools: false, slowMo: 0 };
   }
 
-  async initBrowser() {
+  async initBrowser(customOptions = {}) {
     if (!this.browser) {
-      this.browser = await chromium.launch(this.options);
+      const options = { ...this.defaultOptions, ...customOptions };
+
+      //const options = { headless: false, devtools: true, args: ['--start-maximized'] }
+
+      this.browser = await chromium.launch(options);
     }
     return this.browser;
   }
 
-  async newPage() {
+  async newPage(customOptions = {}) {
+    // Ensure the browser is initialized with the given options
     if (!this.browser) {
-      await this.initBrowser();
+      await this.initBrowser(customOptions);
     }
-    return await this.browser.newPage();
+
+    const context = await this.browser.newContext();
+    return await context.newPage();
   }
 
   async closeBrowser() {

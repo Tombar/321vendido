@@ -8,18 +8,19 @@ const scrapers = {
   remotes: scrapeRemotesComUy,
 };
 
-const runScrapers = async (scraperNames) => {
+const runScrapers = async (scraperNames, debugMode) => {
   const helper = new PlaywrightHelper();
 
   try {
     console.log('Initializing Playwright...');
-    await helper.initBrowser();
+    console.log('Playwright options:', { headless: !debugMode, devtools: debugMode});
+    await helper.initBrowser({ headless: !debugMode, devtools: debugMode, args: ['--start-maximized'] });
 
     const selectedScrapers = scraperNames.map((name) => {
       if (!scrapers[name]) {
         throw new Error(`Scraper for "${name}" not found.`);
       }
-      return scrapers[name](helper); // Pass the helper to each scraper
+      return scrapers[name](helper); 
     });
 
     console.log(`Starting scrapers: ${scraperNames.join(', ')}`);
@@ -45,15 +46,22 @@ const runScrapers = async (scraperNames) => {
           description: 'List of scrapers to run (e.g., siteA, siteB)',
           demandOption: true,
         })
+        .option('debug', {
+          alias: 'd',
+          type: 'boolean',
+          description: 'Enable Playwright debug mode',
+          default: false,
+        })
         .help()
         .alias('help', 'h');
     })
     .argv;
 
   const scraperNames = argv.sites;
+  const debugMode = argv.debug; 
 
   try {
-    await runScrapers(scraperNames);
+    await runScrapers(scraperNames, debugMode);
   } catch (error) {
     console.error('Error initializing scrapers:', error);
   }
