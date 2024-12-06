@@ -8,13 +8,13 @@ db.serialize(() => {
   db.exec(require('fs').readFileSync('src/db/schema.sql', 'utf-8'));
 });
 
-const insertRemate = (site, title, description, startDate, endDate, url) =>
+const insertRemate = (site, title, description, startDate, endDate, url, rematadorId = null) =>
   new Promise((resolve, reject) => {
     const query = `
-      INSERT INTO remates (site, title, description, start_date, end_date, url)
-      VALUES (?, ?, ?, ?, ?, ?);
+      INSERT INTO remates (site, title, description, start_date, end_date, url, rematador_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?);
     `;
-    db.run(query, [site, title, description, startDate, endDate, url], function (err) {
+    db.run(query, [site, title, description, startDate, endDate, url, rematadorId], function (err) {
       if (err) reject(err);
       resolve(this.lastID);
     });
