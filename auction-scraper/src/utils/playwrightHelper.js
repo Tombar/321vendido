@@ -17,10 +17,9 @@ class PlaywrightHelper {
     return this.browser;
   }
 
-  async newPage(customOptions = {}) {
-    // Ensure the browser is initialized with the given options
+  async newPage() {
     if (!this.browser) {
-      await this.initBrowser(customOptions);
+      await this.initBrowser();
     }
 
     const context = await this.browser.newContext();
