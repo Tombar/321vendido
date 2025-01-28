@@ -1,103 +1,69 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { generateRematadores } from '../utils/openai'
 
-const rematadoresJson: {
-  name: string
-  address: string
-  phone: string
-  website: string
-  email: string
-  logo: number | null
-  logoFilePath: string
-  description: any
-}[] = [
-  {
-    name: 'Juan Pérez Remates',
-    address: 'Av. 18 de Julio 1234',
-    phone: '2900 1234',
-    website: 'https://juanperezremates.com.uy',
-    email: 'contacto@juanperezremates.com.uy',
-    logo: null,
-    logoFilePath: './public/images/rematadores/5b960517ef45b0f3b1b372d07e3ae444.jpg',
-    description: {
-      root: {
-        type: 'root',
-        children: [
-          {
-            type: 'paragraph',
-            children: [
-              {
-                text: 'Rematador con más de 20 años de experiencia en el mercado.',
-              },
-            ],
-            version: 1,
-          },
-        ],
-        direction: 'ltr' as 'ltr' | 'rtl' | null,
-        format: '' as '' | 'left' | 'start' | 'center' | 'right' | 'end' | 'justify',
-        indent: 0,
-        version: 1,
-      },
-    },
-  },
-  {
-    name: 'Remates García',
-    address: 'Bulevar Artigas 4567',
-    phone: '2901 5678',
-    website: 'https://rematesgarcia.com.uy',
-    email: 'info@rematesgarcia.com.uy',
-    logo: null,
-    logoFilePath: './public/images/rematadores/5bf91e49c9a9aa2e75bd05340377d836.jpg',
-    description: {
-      root: {
-        type: 'root',
-        children: [
-          {
-            type: 'paragraph',
-            children: [
-              {
-                text: 'Especialistas en remates rurales y maquinaria agrícola.',
-              },
-            ],
-            version: 1,
-          },
-        ],
-        direction: 'ltr' as 'ltr' | 'rtl' | null,
-        format: '' as '' | 'left' | 'start' | 'center' | 'right' | 'end' | 'justify',
-        indent: 0,
-        version: 1,
-      },
-    },
-  },
+// Sample logo files - you should have these in your project
+const logoFiles = [
+  './public/images/rematadores/5b960517ef45b0f3b1b372d07e3ae444.jpg',
+  './public/images/rematadores/5bf91e49c9a9aa2e75bd05340377d836.jpg',
+  './public/images/rematadores/043d7f152f354e9cc0a73f1baf474a67.jpg',
+  './public/images/rematadores/5033b54300c955dd43581ce0ce1d245c.jpg',
+  './public/images/rematadores/b042c07dbb622efd9e751f603bd86cc6.jpg',
+  './public/images/rematadores/cf1b6833a8eb39b94402fbdb89729e13.jpg',
+  './public/images/rematadores/d0b2509c08000f3dc7fde827e0124cb3.png',
+  './public/images/rematadores/f4d405fff7ea8f800afadd377aba3c97.jpg',
 ]
 
 async function run() {
   try {
     const payload = await getPayload({ config })
 
-    for (const rematador of rematadoresJson) {
+    let retries = 3
+    let rematadores
+
+    while (retries > 0) {
+      try {
+        rematadores = await generateRematadores(5)
+        break
+      } catch (error) {
+        retries--
+        if (retries === 0) {
+          throw error
+        }
+        console.log(`Failed attempt, retrying... (${retries} attempts remaining)`)
+        await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second between retries
+      }
+    }
+
+    if (!rematadores) {
+      throw new Error('Failed to generate rematadores data after all retries')
+    }
+
+    for (const rematador of rematadores) {
+      // Randomly select a logo file
+      const logoFilePath = logoFiles[Math.floor(Math.random() * logoFiles.length)]
+
       // Upload logo
       const logoUpload = await payload.create({
         collection: 'media',
         data: {
           alt: `${rematador.name} Logo`,
         },
-        filePath: rematador.logoFilePath,
+        filePath: logoFilePath,
       })
 
       // Create rematador with logo
-      const { logoFilePath, ...rematadorData } = rematador
       await payload.create({
         collection: 'rematadores',
         data: {
-          ...rematadorData,
+          ...rematador,
           logo: logoUpload.id,
         },
       })
       console.log('CREANDO REMATADOR', rematador.name)
     }
   } catch (error) {
-    console.error(JSON.stringify(error))
+    console.error('Error:', error)
     process.exit(1)
   }
 
