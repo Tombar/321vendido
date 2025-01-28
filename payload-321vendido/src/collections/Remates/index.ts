@@ -3,7 +3,7 @@ import { authenticated } from '@/access/authenticated'
 import type { CollectionConfig, CollectionSlug } from 'payload'
 
 export const Remates: CollectionConfig = {
-  slug: 'remates',
+  slug: 'remates' as const,
   access: {
     create: authenticated,
     delete: authenticated,
@@ -32,6 +32,30 @@ export const Remates: CollectionConfig = {
       name: 'description',
       type: 'richText',
       label: 'Descripción',
+      defaultValue: {
+        root: {
+          type: 'root',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [
+            {
+              type: 'paragraph',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'text',
+                  text: '',
+                  version: 1,
+                },
+              ],
+            },
+          ],
+        },
+        version: 1,
+      },
     },
     {
       name: 'start_datetime',
@@ -67,4 +91,4 @@ export const Remates: CollectionConfig = {
       label: 'Imagen de Portada',
     },
   ],
-} 
+}

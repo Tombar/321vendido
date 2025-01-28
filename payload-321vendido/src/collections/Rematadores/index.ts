@@ -2,9 +2,8 @@ import { anyone } from '@/access/anyone'
 import { authenticated } from '@/access/authenticated'
 import type { CollectionConfig } from 'payload'
 
-
 export const Rematadores: CollectionConfig = {
-  slug: 'rematadores',
+  slug: 'rematadores' as const,
   access: {
     create: authenticated,
     delete: authenticated,
@@ -46,6 +45,30 @@ export const Rematadores: CollectionConfig = {
       name: 'description',
       type: 'richText',
       label: 'Descripción',
+      defaultValue: {
+        root: {
+          type: 'root',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [
+            {
+              type: 'paragraph',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'text',
+                  text: '',
+                  version: 1,
+                },
+              ],
+            },
+          ],
+        },
+        version: 1,
+      },
     },
     {
       name: 'logo',
@@ -54,4 +77,4 @@ export const Rematadores: CollectionConfig = {
       label: 'Logo',
     },
   ],
-} 
+}

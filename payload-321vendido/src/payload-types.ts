@@ -17,6 +17,7 @@ export interface Config {
     categories: Category;
     users: User;
     rematadores: Rematadore;
+    remates: Remate;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -34,6 +35,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     rematadores: RematadoresSelect<false> | RematadoresSelect<true>;
+    remates: RematesSelect<false> | RematesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -704,6 +706,36 @@ export interface Rematadore {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "remates".
+ */
+export interface Remate {
+  id: number;
+  title: string;
+  rematador: number | Rematadore;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  start_datetime: string;
+  end_datetime: string;
+  original_post_url?: string | null;
+  cover_image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -897,6 +929,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'rematadores';
         value: number | Rematadore;
+      } | null)
+    | ({
+        relationTo: 'remates';
+        value: number | Remate;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1267,6 +1303,21 @@ export interface RematadoresSelect<T extends boolean = true> {
   email?: T;
   description?: T;
   logo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "remates_select".
+ */
+export interface RematesSelect<T extends boolean = true> {
+  title?: T;
+  rematador?: T;
+  description?: T;
+  start_datetime?: T;
+  end_datetime?: T;
+  original_post_url?: T;
+  cover_image?: T;
   updatedAt?: T;
   createdAt?: T;
 }
